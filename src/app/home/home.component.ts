@@ -7,8 +7,8 @@ import { MatTableModule } from '@angular/material/table';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { FileProcessingService, TopPairResult, EmployeeProject, CollaborationResult } from '../shared/services/file-processing.service';
 import { SettingsService } from '../shared/services/settings.service';
-import { ToastrService } from 'ngx-toastr';
 import { DragDropUploadComponent } from '../shared/components/drag-drop-upload/drag-drop-upload';
+import { ToastrService } from '../shared/services/toastr.service';
 
 @Component({
   selector: 'app-home',

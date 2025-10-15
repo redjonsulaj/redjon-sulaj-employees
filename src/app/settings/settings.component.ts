@@ -6,7 +6,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatButtonModule } from '@angular/material/button';
 import { FormsModule } from '@angular/forms';
 import { SettingsService, AppSettings } from '../shared/services/settings.service';
-import { ToastrService } from 'ngx-toastr';
+import {ToastrService} from '../shared/services/toastr.service';
 
 @Component({
   selector: 'app-settings',

@@ -2,8 +2,8 @@ import { Component, output, signal, computed, ChangeDetectionStrategy } from '@a
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { ToastrService } from 'ngx-toastr';
 import { SettingsService } from '../../services/settings.service';
+import { ToastrService } from '../../services/toastr.service';
 
 @Component({
   selector: 'app-drag-drop-upload',
