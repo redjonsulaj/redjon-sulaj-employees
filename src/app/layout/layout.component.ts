@@ -39,7 +39,7 @@ import { MatButtonModule } from '@angular/material/button';
 
       <mat-sidenav-content>
         <mat-toolbar color="primary">
-          <span>Angular App</span>
+          <span>Sirma Angular App</span>
         </mat-toolbar>
         <div class="content">
           <router-outlet></router-outlet>
