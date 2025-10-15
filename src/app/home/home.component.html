@@ -1,0 +1,149 @@
+<div class="home-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Employee Collaboration Analyzer</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="description">
+        Upload a CSV file to identify the pair of employees who have worked together
+        on common projects for the longest period of time.
+      </p>
+
+      <!-- File Upload Component -->
+      <app-drag-drop-upload
+        (fileUploaded)="onFileUploaded($event)"
+        (fileCleared)="onFileCleared()"
+      />
+
+      <!-- Manual Submit Button (if enabled in settings) -->
+      @if (uploadedFile() && settings().manualSubmit && !isProcessing() && !results()) {
+        <div class="action-buttons">
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="processFile()"
+          >
+            Process File
+          </button>
+        </div>
+      }
+
+      <!-- Loading Spinner -->
+      @if (isProcessing() && settings().showLoadingSpinner) {
+        <div class="loading-container">
+          <mat-spinner diameter="50"></mat-spinner>
+          <p>Processing CSV file...</p>
+        </div>
+      }
+
+      <!-- Results Section -->
+      @if (results()) {
+        <div class="results-section">
+          <h2 class="results-title">Analysis Results</h2>
+
+          <mat-card class="summary-card">
+            <mat-card-content>
+              <div class="summary">
+                <h3>Top Collaboration Pair</h3>
+                <div class="pair-info">
+                  <p><strong>Employee #1:</strong> {{ results()!.empId1 }}</p>
+                  <p><strong>Employee #2:</strong> {{ results()!.empId2 }}</p>
+                  <p><strong>Total Days Worked Together:</strong> {{ results()!.totalDays }}</p>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <h3 class="table-title">Common Projects</h3>
+          <div class="table-container">
+            <table mat-table [dataSource]="results()!.projects" class="results-table">
+
+              <ng-container matColumnDef="empId1">
+                <th mat-header-cell *matHeaderCellDef>Employee ID #1</th>
+                <td mat-cell *matCellDef="let row">{{ row.empId1 }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="empId2">
+                <th mat-header-cell *matHeaderCellDef>Employee ID #2</th>
+                <td mat-cell *matCellDef="let row">{{ row.empId2 }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="projectId">
+                <th mat-header-cell *matHeaderCellDef>Project ID</th>
+                <td mat-cell *matCellDef="let row">{{ row.projectId }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="daysWorked">
+                <th mat-header-cell *matHeaderCellDef>Days Worked</th>
+                <td mat-cell *matCellDef="let row">{{ row.daysWorked }}</td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- No Results Message -->
+      @if (processedWithNoResults()) {
+        <mat-card class="no-results-card">
+          <mat-card-content>
+            <p>No collaboration pairs found in the uploaded file.</p>
+            <p class="hint">Make sure your CSV contains employees working on the same projects with overlapping dates.</p>
+          </mat-card-content>
+        </mat-card>
+      }
+
+      <!-- Show CSV Data Button -->
+      @if (csvData().length > 0 && !showCsvData()) {
+        <div class="action-buttons">
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="toggleCsvData()"
+          >
+            Show CSV Data
+          </button>
+        </div>
+      }
+
+      <!-- CSV Data Section -->
+      @if (csvData().length > 0 && showCsvDataNow()) {
+        <div class="results-section">
+          <h2 class="results-title">Uploaded CSV Data ({{ csvData().length }} records)</h2>
+
+          <!-- Virtual Scrolling Viewport -->
+          <cdk-virtual-scroll-viewport
+            itemSize="48"
+            class="csv-viewport"
+            [style.height.px]="400"
+          >
+            <div class="csv-header">
+              <div class="csv-col">Employee ID</div>
+              <div class="csv-col">Project ID</div>
+              <div class="csv-col">Date From</div>
+              <div class="csv-col">Date To</div>
+            </div>
+
+            <div
+              *cdkVirtualFor="let row of csvData(); trackBy: trackByEmpId"
+              class="csv-row"
+            >
+              <div class="csv-col">{{ row.empId }}</div>
+              <div class="csv-col">{{ row.projectId }}</div>
+              <div class="csv-col">{{ formatDate(row.dateFrom) }}</div>
+              <div class="csv-col">{{ formatDate(row.dateTo) }}</div>
+            </div>
+          </cdk-virtual-scroll-viewport>
+
+          <div class="action-buttons">
+            <button mat-raised-button color="accent" (click)="hideCsvData()">
+              Hide CSV Data
+            </button>
+          </div>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

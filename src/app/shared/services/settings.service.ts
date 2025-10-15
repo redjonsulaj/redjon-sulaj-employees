@@ -6,15 +6,15 @@ export interface AppSettings {
   // Processing
   showLoadingSpinner: boolean;
   manualSubmit: boolean;
-  // Results Display
-  autoShowResults: boolean;
+  // CSV Display
+  autoShowCSVData: boolean;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   maxFileSizeInMB: 10,
   showLoadingSpinner: true,
   manualSubmit: false,
-  autoShowResults: true,
+  autoShowCSVData: true,
 };
 
 const STORAGE_KEY = 'app_settings';
