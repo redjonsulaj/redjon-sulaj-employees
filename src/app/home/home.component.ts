@@ -1,4 +1,4 @@
-import { Component, signal, untracked } from '@angular/core';
+import {Component, computed, signal, untracked} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -46,23 +46,26 @@ export class HomeComponent {
     return this.settingsService.settings;
   }
 
-  showCsvDataNow(): boolean {
-    return (this.settings().autoShowCSVData && this.csvData().length > 0) && this.showCsvData();
-  }
+  showCsvDataNow = computed(() =>
+    this.settings().autoShowCSVData &&
+    this.csvData().length > 0 &&
+    this.showCsvData()
+  );
 
   onFileUploaded(file: File): void {
     this.uploadedFile.set(file);
 
-    this.batchUpdate({
-      csvData: [],
-      showCsvData: false,
-      results: null,
-      processedWithNoResults: false
-    });
-
+    this.resetState();
     if (!this.settings().manualSubmit) {
       this.processFile();
     }
+  }
+
+  private resetState(): void {
+    this.csvData.set([]);
+    this.showCsvData.set(false);
+    this.results.set(null);
+    this.processedWithNoResults.set(false);
   }
 
   onFileCleared(): void {
@@ -101,13 +104,7 @@ export class HomeComponent {
 
       const result = await this.processDataWithProgress(data);
 
-      this.batchUpdate({
-        csvData: data,
-        showCsvData: shouldAutoShow,
-        results: result,
-        processedWithNoResults: !result,
-        isProcessing: false
-      });
+      this.updateResults(data, result, shouldAutoShow);
 
       if (result) {
         this.toastr.success(
@@ -128,8 +125,20 @@ export class HomeComponent {
     }
   }
 
+  private updateResults(
+    data: EmployeeProject[],
+    result: TopPairResult | null,
+    shouldAutoShow: boolean
+  ): void {
+    this.csvData.set(data);
+    this.showCsvData.set(shouldAutoShow);
+    this.results.set(result);
+    this.processedWithNoResults.set(!result);
+    this.isProcessing.set(false);
+  }
+
   private async processDataWithProgress(data: EmployeeProject[]): Promise<TopPairResult | null> {
-    const ASYNC_THRESHOLD = 5000;
+    const ASYNC_THRESHOLD = 1000;
 
     if (data.length > ASYNC_THRESHOLD) {
       return new Promise((resolve) => {
@@ -185,8 +194,8 @@ export class HomeComponent {
     });
   }
 
-  trackByEmpId(index: number, item: EmployeeProject): number {
-    return item.empId;
+  trackByEmpId(index: number, item: EmployeeProject): string {
+    return `${item.empId}-${item.projectId}-${index}`;
   }
 
   trackByResult(index: number, item: CollaborationResult): string {

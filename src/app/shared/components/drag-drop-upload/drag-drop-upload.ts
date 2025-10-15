@@ -1,4 +1,4 @@
-import { Component, output, input, signal } from '@angular/core';
+import { Component, output, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,7 +10,8 @@ import { SettingsService } from '../../services/settings.service';
   standalone: true,
   imports: [CommonModule, MatIconModule, MatButtonModule],
   templateUrl: 'drag-drop-upload.html',
-  styleUrls: ['drag-drop-upload.scss']
+  styleUrls: ['drag-drop-upload.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DragDropUploadComponent {
   // Outputs
@@ -20,26 +21,28 @@ export class DragDropUploadComponent {
   // Signals
   isDragOver = signal(false);
   uploadedFile = signal<File | null>(null);
-  maxFileSizeMB = signal(10);
+  maxFileSizeMB = computed(() => this.settingsService.settings().maxFileSizeInMB);
+  private maxSizeBytes = computed(() => this.maxFileSizeMB() * 1024 * 1024);
 
   constructor(
     private toastr: ToastrService,
     private settingsService: SettingsService
-  ) {
-    // Get max file size from settings
-    this.maxFileSizeMB.set(this.settingsService.settings().maxFileSizeInMB);
-  }
+  ) {}
 
   onDragOver(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    this.isDragOver.set(true);
+    if (!this.isDragOver()) {
+      this.isDragOver.set(true);
+    }
   }
 
   onDragLeave(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    this.isDragOver.set(false);
+    if (this.isDragOver()) {
+      this.isDragOver.set(false);
+    }
   }
 
   onDrop(event: DragEvent): void {
@@ -58,28 +61,13 @@ export class DragDropUploadComponent {
     if (input.files && input.files.length > 0) {
       this.handleFile(input.files[0]);
     }
+    input.value = '';
   }
 
   private handleFile(file: File): void {
-    // Validate file type
-    if (!file.name.toLowerCase().endsWith('.csv')) {
-      this.toastr.error('Please upload a CSV file', 'Invalid File Type');
-      return;
-    }
-
-    // Validate file size
-    const maxSizeBytes = this.maxFileSizeMB() * 1024 * 1024;
-    if (file.size > maxSizeBytes) {
-      this.toastr.error(
-        `File size exceeds ${this.maxFileSizeMB()} MB limit`,
-        'File Too Large'
-      );
-      return;
-    }
-
-    // Validate file is not empty
-    if (file.size === 0) {
-      this.toastr.error('The selected file is empty', 'Invalid File');
+    const validationError = this.validateFile(file);
+    if (validationError) {
+      this.toastr.error(validationError.message, validationError.title);
       return;
     }
 
@@ -87,6 +75,25 @@ export class DragDropUploadComponent {
     this.uploadedFile.set(file);
     this.toastr.success(`${file.name} uploaded successfully`, 'File Uploaded');
     this.fileUploaded.emit(file);
+  }
+
+  private validateFile(file: File): { message: string; title: string } | null {
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      return { message: 'Please upload a CSV file', title: 'Invalid File Type' };
+    }
+
+    if (file.size === 0) {
+      return { message: 'The selected file is empty', title: 'Invalid File' };
+    }
+
+    if (file.size > this.maxSizeBytes()) {
+      return {
+        message: `File size exceeds ${this.maxFileSizeMB()} MB limit`,
+        title: 'File Too Large'
+      };
+    }
+
+    return null;
   }
 
   clearFile(event: Event): void {
@@ -98,9 +105,11 @@ export class DragDropUploadComponent {
 
   formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 Bytes';
+
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+
+    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
   }
 }
